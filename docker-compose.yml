@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  cs-construction-web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cs-construction-website
+    ports:
+      - "5024:5024"
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+    networks:
+      - cs-construction-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5024"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.cs-construction.rule=Host(`localhost`)"
+      - "traefik.http.services.cs-construction.loadbalancer.server.port=5024"
+
+  # Optional: Add a reverse proxy (uncomment if needed)
+  # nginx-proxy:
+  #   image: nginx:alpine
+  #   container_name: cs-construction-proxy
+  #   ports:
+  #     - "80:80"
+  #     - "443:443"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf:ro
+  #   depends_on:
+  #     - cs-construction-web
+  #   networks:
+  #     - cs-construction-network
+
+networks:
+  cs-construction-network:
+    driver: bridge
+
+volumes:
+  cs-construction-data:
+    driver: local
